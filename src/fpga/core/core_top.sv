@@ -472,6 +472,18 @@ data_loader #(
     .write_data(ioctl_dout)
 );
 
+
+//
+// Coin Pulse
+//
+
+wire m_coin_pulse;
+shortpulse coin_pulse(
+	.clk(clk_sys),
+	.inp(m_coin),
+	.pulse(m_coin_pulse)
+);
+
 ///////////////////////////////////////////////
 // High Score
 ///////////////////////////////////////////////
@@ -775,7 +787,7 @@ dkongjr_top dkongjr(
 
     .I_S1(~m_start1),
     .I_S2(~m_start2),
-    .I_C1(~m_coin),
+    .I_C1(~m_coin_pulse),
 
     .I_DIP_SW(m_dipswitch),
 	 .I_SF(0),
@@ -831,4 +843,34 @@ mf_pllbase mp1 (
 );
 
     
+endmodule
+
+
+module shortpulse
+(
+   input    clk,
+   input    inp,
+   output   pulse
+);
+
+reg        out;
+reg [19:0] pulse_cnt = 0;
+
+always_ff @(posedge clk) begin
+
+   reg old_inp;
+   out <= 1'b0;
+
+   if (|pulse_cnt) begin
+      pulse_cnt <= pulse_cnt - 1'b1;
+      out <= 1'b1;
+   end else begin
+      old_inp <= inp;
+      if (old_inp && !inp) pulse_cnt <= 20'hFFFFF;
+   end
+
+end
+
+assign pulse = out;
+
 endmodule
